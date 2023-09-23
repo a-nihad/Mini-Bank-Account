@@ -1,101 +1,88 @@
 import { useReducer } from "react";
-import Button from "./components/Button";
+import Main from "./components/Main";
+import OpeningPage from "./components/OpeningPage";
 
 const initialState = {
   balance: 0,
   loan: 0,
+  // openAccount, deposit, withdrow, requestLoan, payLoan, closeAccount
   isOpen: false,
+  deposit: "",
+  withdrow: "",
 };
 function reducer(state, action) {
   switch (action.type) {
-    case "open":
+    case "openAccount":
       return {
         ...state,
         balance: action.payload,
         isOpen: true,
       };
+    case "addDeposit":
+      return {
+        ...state,
+        deposit: action.payload,
+      };
     case "deposit":
       return {
         ...state,
-        balance: state.balance + action.payload,
+        balance: state.balance + state.deposit,
+        deposit: "",
+      };
+    case "lessWithdrow":
+      return {
+        ...state,
+        withdrow: action.payload,
       };
     case "withdrow":
       return {
         ...state,
-        balance: state.balance - action.payload,
+        balance: state.balance - state.withdrow,
+        withdrow: "",
       };
-    case "loan":
+    case "requestLoan":
+      if (state.loan > 0) return state;
       return {
         ...state,
-        balance:
-          state.loan === 0 ? state.balance + action.payload : state.balance,
+        balance: state.balance + action.payload,
         loan: action.payload,
       };
-    case "paid":
+    case "payLoan":
       return {
         ...state,
-        balance:
-          state.loan > 0 ? state.balance - action.payload : state.balance,
         loan: 0,
+        balance: state.balance - state.loan,
       };
-    case "close":
-      if (state.balance === 0) {
-        return {
-          ...initialState,
-        };
-      } else {
-        return state;
-      }
+    case "closeAccount":
+      if (state.balance !== 0 || state.loan > 0) return state;
+      return {
+        ...initialState,
+      };
+
     default:
-      throw new Error("error");
+      throw new Error("Unknown");
   }
 }
 
 function App() {
-  const [{ balance, loan, isOpen }, dispatch] = useReducer(
+  const [{ balance, loan, isOpen, deposit, withdrow }, dispatch] = useReducer(
     reducer,
-    initialState
+    initialState,
   );
   return (
-    <div className="text-center text-2xl space-y-4">
-      <h1 className="text-4xl font-bold mt-10"> Mini Bank Account </h1>
-      <h1> Balance:- {balance} </h1>
-      <h1> Loan:- {loan} </h1>
-      <div className="flex flex-col gap-5 items-center">
-        <Button
-          disabled={isOpen}
-          onclick={() => dispatch({ type: "open", payload: 500 })}
-        >
-          Open Account
-        </Button>
+    <div className="h-screen w-screen bg-[#07122D] pt-10">
+      <div className="m-auto h-[650px] w-[400px] rounded-2xl bg-[#F5F5F4] ">
+        {!isOpen && <OpeningPage dispatch={dispatch} />}
 
-        <Button
-          disabled={!isOpen}
-          onclick={() => dispatch({ type: "deposit", payload: 150 })}
-        >
-          Deposit 150
-        </Button>
-        <Button
-          disabled={!isOpen}
-          onclick={() => dispatch({ type: "withdrow", payload: 50 })}
-        >
-          Withdraw 50
-        </Button>
-        <Button
-          disabled={!isOpen}
-          onclick={() => dispatch({ type: "loan", payload: 5000 })}
-        >
-          Request a loan of 5000
-        </Button>
-        <Button
-          disabled={!isOpen}
-          onclick={() => dispatch({ type: "paid", payload: 5000 })}
-        >
-          Pay Loan
-        </Button>
-        <Button disabled={!isOpen} onclick={() => dispatch({ type: "close" })}>
-          Close Account
-        </Button>
+        {isOpen && (
+          <Main
+            balance={balance}
+            loan={loan}
+            dispatch={dispatch}
+            deposit={deposit}
+            withdrow={withdrow}
+          />
+        )}
       </div>
     </div>
   );
